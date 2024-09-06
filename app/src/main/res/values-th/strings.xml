@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">QRender</string>
+    <string name="open_scanner">เปิดเครื่องสแกน</string>
+    <string name="cancelled">ยกเลิกแล้ว</string>
+    <string name="not_support_wifi_format">ไม่รองรับการเชื่อมต่อผ่าน Wifi</string>
+    <string name="not_support_code">ไม่รองรับรูปแบบของ QRCode</string>
+</resources>

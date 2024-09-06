@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">QRender</string>
+    <string name="open_scanner">Open Scanner</string>
+    <string name="cancelled">Cancelled</string>
+    <string name="not_support_wifi_format">Not support wifi format</string>
+    <string name="not_support_code">Not Support QRCode</string>
 </resources>
