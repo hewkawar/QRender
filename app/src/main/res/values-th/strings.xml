@@ -5,4 +5,5 @@
     <string name="cancelled">ยกเลิกแล้ว</string>
     <string name="not_support_wifi_format">ไม่รองรับการเชื่อมต่อผ่าน Wifi</string>
     <string name="not_support_code">ไม่รองรับรูปแบบของ QRCode</string>
+    <string name="scan">สแกน</string>
 </resources>
