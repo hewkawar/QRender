@@ -25,7 +25,7 @@ public class ScanTileService extends TileService {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
 
-        tile.setState(Tile.S);
+        tile.setState(Tile.STATE_INACTIVE);
         tile.setLabel(getString(R.string.scan));
 
         tile.updateTile();
