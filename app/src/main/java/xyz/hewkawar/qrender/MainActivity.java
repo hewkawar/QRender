@@ -4,6 +4,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -54,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -96,17 +99,20 @@ public class MainActivity extends AppCompatActivity {
         copyTextBtn = findViewById(R.id.copyText);
         debugText = findViewById(R.id.debugText);
 
+        ScanOptions scanOptions = new ScanOptions();
+        scanOptions.setOrientationLocked(true);
+
         if (intent != null && intent.hasExtra("WithScanner")) {
             boolean value = intent.getBooleanExtra("WithScanner", false);
             if (value) {
-                scanQrResultLauncher.launch(new ScanContract().createIntent(MainActivity.this, new ScanOptions()));
+                scanQrResultLauncher.launch(new ScanContract().createIntent(MainActivity.this, scanOptions));
             }
         }
 
         openScannerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                scanQrResultLauncher.launch(new ScanContract().createIntent(MainActivity.this, new ScanOptions()));
+                scanQrResultLauncher.launch(new ScanContract().createIntent(MainActivity.this, scanOptions));
 
             }
         });
