@@ -1,5 +1,8 @@
 package xyz.hewkawar.qrender;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -24,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     public IntentIntegrator integrator;
 
     public TextView debugText;
+    public Button copyTextBtn;
 
     public void openExternalBrowser(String url) {
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -53,11 +57,14 @@ public class MainActivity extends AppCompatActivity {
         });
 
         Intent intent = getIntent();
+        ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
 
         integrator = new IntentIntegrator(this);
         integrator.setOrientationLocked(true);
 
         Button openScannerBtn = findViewById(R.id.openScanner);
+
+        copyTextBtn = findViewById(R.id.copyText);
         debugText = findViewById(R.id.debugText);
 
         if (intent != null && intent.hasExtra("WithScanner")) {
@@ -73,6 +80,17 @@ public class MainActivity extends AppCompatActivity {
                 integrator.initiateScan();
             }
         });
+
+        copyTextBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String textToCopy = debugText.getText().toString();
+
+                ClipData clip = ClipData.newPlainText("qrText", textToCopy);
+
+                clipboardManager.setPrimaryClip(clip);
+            }
+        });
     }
 
     @Override
@@ -86,15 +104,20 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, getString(R.string.cancelled), Toast.LENGTH_SHORT).show();
             } else {
                 String text = result.getContents();
+
+                debugText.setText(text);
+
                 if (text.startsWith("WIFI:")) {
                     Toast.makeText(this, getString(R.string.not_support_wifi_format), Toast.LENGTH_SHORT).show();
                 } else if (isValidURL(text)) {
                     Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
-                    debugText.setText(text);
-                    openExternalBrowser(result.getContents());
+                    openExternalBrowser(text);
                 } else {
                     Toast.makeText(this, getString(R.string.not_support_code), Toast.LENGTH_SHORT).show();
                 }
+
+                debugText.setVisibility(View.VISIBLE);
+                copyTextBtn.setVisibility(View.VISIBLE);
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
