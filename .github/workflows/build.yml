@@ -7,6 +7,18 @@ env:
   # The name of the Play Store
   playstore_name: QRender
 
+  # Keystore Path
+  ks_path: hewkawar.jks
+
+  # Keystore Password
+  ks_store_pass: ${{ secrets.KS_PASS }}
+
+  # Keystore Alias
+  ks_alias: ${{ secrets.KS_ALIAS }}
+
+  # Keystore Alias Password
+  ks_alias_pass: ${{ secrets.KS_ALIAS_PASS }}
+
 on:
 
   push:
@@ -39,6 +51,13 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
+      - name: Download Bundletool
+        run: |
+          json=$(curl -s https://api.github.com/repos/google/bundletool/releases/latest)
+          downloadUrl=$(echo $json | jq -r ".assets | .[].browser_download_url")
+          curl $downloadUrl -4 -sL -o 'bundletool.jar'
+          java -jar bundletool.jar version
+
       - name: Change wrapper permissions
         run: chmod +x ./gradlew
 
@@ -62,6 +81,18 @@ jobs:
       # Noted for main module build [main_project_module]:bundleRelease
       - name: Build app bundle release (AAB) - ${{ env.main_project_module }} module
         run: ./gradlew ${{ env.main_project_module }}:bundleRelease
+
+
+      # Build APK From Bundle Using Bundletool
+      # Noted For Output [main_project_module]/build/outputs/bundle/release/
+      - name: Build APK(s) Release from bundle using bundletool (Path same with bundle output)
+        run: java -jar "bundletool.jar" build-apks --bundle=${{ env.main_project_module }}/build/outputs/bundle/release/${{ env.generated_name_aab }}.aab --output=${{ env.main_project_module }}/build/outputs/bundle/release/${{ env.generated_name_aab }}.apks --mode=universal --ks="app/${{ env.ks_path }}" --ks-pass=pass:${{ env.ks_store_pass }} --ks-key-alias=${{ env.ks_alias }} --key-pass=pass:${{ env.ks_alias_pass }}
+
+      # Duplicate APK(s) Release to zip file and extract
+      - name: Duplicate APK(s) Release to zip file and extract
+        run: |
+          cd ${{ env.main_project_module }}/build/outputs/bundle/release/
+          unzip -p ${{ env.generated_name_aab }}.apks universal.apk > ${{ env.generated_name_aab }}.apk
 
       # Upload Artifact Build
       # Noted For Output [main_project_module]/build/outputs/apk/debug/
