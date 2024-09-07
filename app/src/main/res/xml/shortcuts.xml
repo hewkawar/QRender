@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="compose"
+        android:enabled="true"
+        android:icon="@drawable/scan_qrcode_svgrepo_com"
+        android:shortcutShortLabel="@string/scan"
+        android:shortcutLongLabel="@string/open_scanner"
+        android:shortcutDisabledMessage="@string/scan">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="xyz.hewkawar.qrender"
+            android:targetClass="xyz.hewkawar.qrender.MainActivity">
+            <extra
+                android:name="WithScanner"
+                android:value="true" />
+        </intent>
+        <categories android:name="android.shortcut.conversation" />
+        <capability-binding android:key="actions.intent.CREATE_MESSAGE" />
+    </shortcut>
+</shortcuts>
