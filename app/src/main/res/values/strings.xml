@@ -5,4 +5,5 @@
     <string name="not_support_wifi_format">Not support wifi format</string>
     <string name="not_support_code">Not Support QRCode</string>
     <string name="scan">Scan</string>
+    <string name="copy">Copy Text</string>
 </resources>
