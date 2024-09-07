@@ -59,8 +59,10 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = getIntent();
         ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
 
-        integrator = new IntentIntegrator(this);
-        integrator.setOrientationLocked(true);
+        integrator = new IntentIntegrator(this)
+                .setBarcodeImageEnabled(false)
+                .setBeepEnabled(false)
+                .setOrientationLocked(true);
 
         Button openScannerBtn = findViewById(R.id.openScanner);
 
