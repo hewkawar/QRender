@@ -12,22 +12,26 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
+import com.journeyapps.barcodescanner.ScanContract;
+import com.journeyapps.barcodescanner.ScanIntentResult;
+import com.journeyapps.barcodescanner.ScanOptions;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
-    public IntentIntegrator integrator;
-
     public TextView debugText;
     public Button copyTextBtn;
+
+    private ActivityResultLauncher<Intent> scanQrResultLauncher;
+
 
     public void openExternalBrowser(String url) {
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -56,13 +60,36 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        scanQrResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                resultData ->{
+                    if (resultData.getResultCode() == RESULT_OK) {
+                        ScanIntentResult result = ScanIntentResult.parseActivityResult(resultData.getResultCode(), resultData.getData());
+
+                        if (result.getContents() == null) {
+                            Toast.makeText(this, getString(R.string.cancelled), Toast.LENGTH_SHORT).show();
+                        } else {
+                            String text = result.getContents();
+
+                            debugText.setText(text);
+
+                            if (text.startsWith("WIFI:")) {
+                                Toast.makeText(this, getString(R.string.not_support_wifi_format), Toast.LENGTH_SHORT).show();
+                            } else if (isValidURL(text)) {
+                                Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
+                                openExternalBrowser(text);
+                            } else {
+                                Toast.makeText(this, getString(R.string.not_support_code), Toast.LENGTH_SHORT).show();
+                            }
+
+                            debugText.setVisibility(View.VISIBLE);
+                            copyTextBtn.setVisibility(View.VISIBLE);
+                        }
+                    }
+                });
+
         Intent intent = getIntent();
         ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-
-        integrator = new IntentIntegrator(this)
-                .setBarcodeImageEnabled(false)
-                .setBeepEnabled(false)
-                .setOrientationLocked(true);
 
         Button openScannerBtn = findViewById(R.id.openScanner);
 
@@ -72,14 +99,15 @@ public class MainActivity extends AppCompatActivity {
         if (intent != null && intent.hasExtra("WithScanner")) {
             boolean value = intent.getBooleanExtra("WithScanner", false);
             if (value) {
-                integrator.initiateScan();
+                scanQrResultLauncher.launch(new ScanContract().createIntent(MainActivity.this, new ScanOptions()));
             }
         }
 
         openScannerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                integrator.initiateScan();
+                scanQrResultLauncher.launch(new ScanContract().createIntent(MainActivity.this, new ScanOptions()));
+
             }
         });
 
@@ -93,36 +121,5 @@ public class MainActivity extends AppCompatActivity {
                 clipboardManager.setPrimaryClip(clip);
             }
         });
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-
-        if (result != null) {
-            if (result.getContents() == null) {
-                Toast.makeText(this, getString(R.string.cancelled), Toast.LENGTH_SHORT).show();
-            } else {
-                String text = result.getContents();
-
-                debugText.setText(text);
-
-                if (text.startsWith("WIFI:")) {
-                    Toast.makeText(this, getString(R.string.not_support_wifi_format), Toast.LENGTH_SHORT).show();
-                } else if (isValidURL(text)) {
-                    Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
-                    openExternalBrowser(text);
-                } else {
-                    Toast.makeText(this, getString(R.string.not_support_code), Toast.LENGTH_SHORT).show();
-                }
-
-                debugText.setVisibility(View.VISIBLE);
-                copyTextBtn.setVisibility(View.VISIBLE);
-            }
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
-        }
     }
 }
