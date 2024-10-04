@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "xyz.hewkawar.qrender"
-    compileSdk = 30
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "xyz.hewkawar.qrender"
