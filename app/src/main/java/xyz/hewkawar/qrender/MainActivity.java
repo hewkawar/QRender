@@ -1,11 +1,15 @@
 package xyz.hewkawar.qrender;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -16,6 +20,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -33,6 +38,22 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityResultLauncher<Intent> scanQrResultLauncher;
 
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is not in the Support Library.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Result";
+            String description = "Scan result";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("RESULT", name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this.
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
 
     public void openExternalBrowser(String url) {
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -49,6 +70,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void copyToClipboard(String text) {
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("QR Scan Result", text);
+        clipboard.setPrimaryClip(clip);
+        Toast.makeText(this, "Copied to clipboard", Toast.LENGTH_SHORT).show();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,6 +91,11 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        createNotificationChannel();
+
+        ScanOptions scanOptions = new ScanOptions();
+        scanOptions.setOrientationLocked(true);
+
         scanQrResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 resultData ->{
@@ -76,56 +109,34 @@ public class MainActivity extends AppCompatActivity {
 
                             debugText.setText(text);
 
-                            if (text.startsWith("WIFI:")) {
-                                Toast.makeText(this, getString(R.string.not_support_wifi_format), Toast.LENGTH_SHORT).show();
-                            } else if (isValidURL(text)) {
+                            if (isValidURL(text)) {
                                 Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
                                 openExternalBrowser(text);
                             } else {
-                                Toast.makeText(this, getString(R.string.not_support_code), Toast.LENGTH_SHORT).show();
+                                NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "RESULT")
+                                        .setSmallIcon(R.drawable.scan_qrcode_svgrepo_com)
+                                        .setContentTitle("Scan Result")
+                                        .setContentText(text)
+                                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                        .addAction(new NotificationCompat.Action.Builder(
+                                                R.drawable.copy_ic, "Copy",
+                                                PendingIntent.getBroadcast(this, 0,
+                                                        new Intent(this, CopyBroadcastReceiver.class)
+                                                                .putExtra("textToCopy", text),
+                                                        PendingIntent.FLAG_UPDATE_CURRENT)).build());
+
+                                NotificationManager notificationManager = getSystemService(NotificationManager.class);
+                                notificationManager.notify(1, builder.build());
                             }
 
                             debugText.setVisibility(View.VISIBLE);
                             copyTextBtn.setVisibility(View.VISIBLE);
+
+                            scanQrResultLauncher.launch(new ScanContract().createIntent(MainActivity.this, scanOptions));
                         }
                     }
                 });
 
-        Intent intent = getIntent();
-        ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-
-        Button openScannerBtn = findViewById(R.id.openScanner);
-
-        copyTextBtn = findViewById(R.id.copyText);
-        debugText = findViewById(R.id.debugText);
-
-        ScanOptions scanOptions = new ScanOptions();
-        scanOptions.setOrientationLocked(true);
-
-        if (intent != null && intent.hasExtra("WithScanner")) {
-            boolean value = intent.getBooleanExtra("WithScanner", false);
-            if (value) {
-                scanQrResultLauncher.launch(new ScanContract().createIntent(MainActivity.this, scanOptions));
-            }
-        }
-
-        openScannerBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                scanQrResultLauncher.launch(new ScanContract().createIntent(MainActivity.this, scanOptions));
-
-            }
-        });
-
-        copyTextBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String textToCopy = debugText.getText().toString();
-
-                ClipData clip = ClipData.newPlainText("qrText", textToCopy);
-
-                clipboardManager.setPrimaryClip(clip);
-            }
-        });
+        scanQrResultLauncher.launch(new ScanContract().createIntent(MainActivity.this, scanOptions));
     }
 }

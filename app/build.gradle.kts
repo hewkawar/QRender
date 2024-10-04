@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "xyz.hewkawar.qrender"
-    compileSdk = 34
+    compileSdk = 30
 
     defaultConfig {
         applicationId = "xyz.hewkawar.qrender"
@@ -26,8 +26,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
@@ -40,6 +40,7 @@ dependencies {
 
     implementation(libs.zxing.android.embedded)
     implementation(libs.zxing.core)
+    implementation(libs.core)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
